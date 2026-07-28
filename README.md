@@ -1,4 +1,3 @@
-[README.md](https://github.com/user-attachments/files/30438116/README.md)
 # NKK YB / YB2シリーズ 型番コンフィギュレータ（非公式）
 
 NKKスイッチズの照光式押ボタンスイッチ **YBシリーズ／YB2シリーズ** のオーダー形名を、仕様を選ぶだけで組み立てられるWebツールです。型番を入力して仕様を確認する**逆引き**にも対応しています。
