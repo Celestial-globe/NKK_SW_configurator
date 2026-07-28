@@ -1,6 +1,6 @@
-# NKK YB / YB2シリーズ 型番コンフィギュレータ（非公式）
+# NKK YB / YB2 / UB / UB2シリーズ 型番コンフィギュレータ（非公式）
 
-NKKスイッチズの照光式押ボタンスイッチ **YBシリーズ／YB2シリーズ** のオーダー形名を、仕様を選ぶだけで組み立てられるWebツールです。型番を入力して仕様を確認する**逆引き**にも対応しています。
+NKKスイッチズの照光式押ボタンスイッチ **YB／YB2／UB／UB2シリーズ** のオーダー形名を、仕様を選ぶだけで組み立てられるWebツールです。型番を入力して仕様を確認する**逆引き**にも対応しています。
 
 **▶ デモ： https://celestial-globe.github.io/NKK_SW_configurator/**
 
@@ -19,6 +19,8 @@ NKKスイッチズの照光式押ボタンスイッチ **YBシリーズ／YB2シ
 |---|---|
 | YB | 短胴形・φ16取付け（防水形／非防水形、丸・角・長角、白熱球／LED／2色発光／部分照光） |
 | YB2 | 業界最薄クラス防水形・φ22／□21取付け（ハーフミラー・外輪照光・非照光ボタン、黒／ステンレス調フランジ。旧シルバー記号Sの逆引きにも対応） |
+| UB | 超短胴形・LED本体内蔵（角・長角、輝度1／輝度2／2色発光、部分照光ボタン、2色変換表示ボタン、PC端子／はんだ端子） |
+| UB2 | 超短胴形・角形・LED本体内蔵（ディンプル形／フラット形ボタン、2色変換表示ボタン） |
 
 ## 注意・免責
 
@@ -26,6 +28,8 @@ NKKスイッチズの照光式押ボタンスイッチ **YBシリーズ／YB2シ
 - 形名体系はNKK公式カタログ（YB／YB2シリーズ）に基づいていますが、カタログ改版・受注／販売中止により現状と異なる場合があります。**発注前に必ず公式サイトで現行品であることを確認してください。**
   - [YBシリーズ（公式）](https://www.nkkswitches.co.jp/product/series/illuminated_pushbutton_YB.html)
   - [YB2シリーズ（公式）](https://www.nkkswitches.co.jp/product/series/illuminated_pushbutton_YB2.html)
+  - [UBシリーズ（公式）](https://www.nkkswitches.co.jp/product/series/illuminated_pushbutton_UB.html)
+  - [UB2シリーズ（公式）](https://www.nkkswitches.co.jp/product/series/illuminated_pushbutton_UB2.html)
 - 本ツールの利用により生じた損害について、作者は責任を負いません。
 
 ## 組み合わせの誤りを見つけたら
