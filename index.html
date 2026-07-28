@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NKK YB / YB2シリーズ 型番コンフィギュレータ</title>
+<style>
+  :root{
+    --bg:#14171b;
+    --panel:#1d2228;
+    --panel2:#232a31;
+    --line:#333c45;
+    --text:#e9ecef;
+    --muted:#98a3ad;
+    --faint:#6b7680;
+    --seg1:#7fb7e8; /* 本体 */
+    --seg2:#e8b97f; /* 発光素子 */
+    --seg3:#9fdb9a; /* 操作部 */
+    --seg4:#d99fd6; /* 販売形態 */
+    --mono:ui-monospace,"SF Mono","Cascadia Code","Consolas","Osaka-Mono","MS Gothic",monospace;
+    --sans:"Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP","Yu Gothic UI","Meiryo",sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    background:var(--bg);
+    background-image:radial-gradient(circle at 50% -20%, #1e252c 0%, var(--bg) 60%);
+    color:var(--text);
+    font-family:var(--sans);
+    font-size:14px;
+    line-height:1.6;
+    min-height:100vh;
+    padding-bottom:60px;
+  }
+  header{
+    border-bottom:1px solid var(--line);
+    padding:22px 20px 0;
+    max-width:1100px;margin:0 auto;
+  }
+  header h1{font-size:19px;font-weight:600;letter-spacing:.02em}
+  header p{color:var(--muted);font-size:12.5px;margin-top:6px}
+
+  /* タブ */
+  .tabs{display:flex;gap:4px;margin-top:16px}
+  .tab{
+    font-family:var(--mono);font-size:14px;font-weight:700;letter-spacing:.08em;
+    color:var(--muted);background:transparent;border:1px solid var(--line);border-bottom:none;
+    border-radius:8px 8px 0 0;padding:8px 24px 7px;cursor:pointer;position:relative;top:1px;
+  }
+  .tab .sub{display:block;font-family:var(--sans);font-size:10px;font-weight:400;letter-spacing:0;color:var(--faint);line-height:1.3}
+  .tab.on{color:var(--text);background:var(--panel);border-color:#4d5a66}
+  .tab.on .sub{color:var(--muted)}
+  .tab:focus-visible{outline:2px solid var(--seg1);outline-offset:1px}
+
+  .wrap{max-width:1100px;margin:0 auto;padding:20px;display:grid;grid-template-columns:1fr 400px;gap:20px;align-items:start}
+  @media(max-width:900px){.wrap{grid-template-columns:1fr}}
+
+  section.step{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin-bottom:14px}
+  section.step h2{font-size:13px;font-weight:600;color:var(--text);margin-bottom:12px;display:flex;align-items:center;gap:9px}
+  section.step h2 .tag{font-family:var(--mono);font-size:10.5px;color:var(--bg);border-radius:3px;padding:1px 7px;letter-spacing:.05em;font-weight:700}
+  .tag.t1{background:var(--seg1)} .tag.t2{background:var(--seg2)} .tag.t3{background:var(--seg3)} .tag.t4{background:var(--seg4)}
+  .field{margin-bottom:12px}
+  .field:last-child{margin-bottom:2px}
+  .field .lbl{font-size:11.5px;color:var(--muted);margin-bottom:6px;letter-spacing:.03em}
+  .opts{display:flex;flex-wrap:wrap;gap:7px}
+  button.opt{
+    font-family:var(--sans);font-size:12.5px;color:var(--text);
+    background:var(--panel2);border:1px solid var(--line);border-radius:6px;
+    padding:6px 12px;cursor:pointer;transition:border-color .12s, background .12s;
+    line-height:1.4;
+  }
+  button.opt .code{font-family:var(--mono);font-size:11px;color:var(--faint);margin-left:6px}
+  button.opt:hover{border-color:#4d5a66}
+  button.opt.on{background:#2c3742;border-color:#7fa6c4;color:#fff}
+  button.opt.on .code{color:var(--seg1)}
+  button.opt:disabled{opacity:.32;cursor:not-allowed}
+  button.opt:focus-visible{outline:2px solid var(--seg1);outline-offset:1px}
+  .hint{font-size:11px;color:var(--faint);margin-top:6px}
+  .fixed-note{font-size:11.5px;color:var(--muted);background:var(--panel2);border:1px dashed var(--line);border-radius:6px;padding:7px 10px;margin-bottom:12px}
+
+  /* 逆引き */
+  .decoderow{display:flex;gap:8px}
+  input.decode-in{
+    flex:1;font-family:var(--mono);font-size:13.5px;letter-spacing:.04em;color:var(--text);
+    background:#101418;border:1px solid var(--line);border-radius:6px;padding:8px 12px;min-width:0;
+  }
+  input.decode-in::placeholder{color:var(--faint);font-size:12px}
+  input.decode-in:focus{outline:none;border-color:#7fa6c4}
+  .decode-msg{font-size:12px;margin-top:8px;line-height:1.6}
+  .decode-msg.ok{color:#9fdb9a}
+  .decode-msg.warn{color:#e8b97f}
+  .decode-msg.err{color:#e89a9a}
+
+  .result{position:sticky;top:16px}
+  @media(max-width:900px){.result{position:static}}
+  .result .card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:18px;margin-bottom:14px}
+  .card h3{font-size:12px;color:var(--muted);font-weight:600;letter-spacing:.06em;margin-bottom:10px}
+
+  .pn{
+    font-family:var(--mono);font-size:21px;letter-spacing:.04em;font-weight:600;
+    background:#101418;border:1px solid var(--line);border-radius:8px;
+    padding:14px 14px 10px;overflow-x:auto;white-space:nowrap;
+  }
+  .pn .s1{color:var(--seg1);border-bottom:2px solid var(--seg1)}
+  .pn .s2{color:var(--seg2);border-bottom:2px solid var(--seg2)}
+  .pn .s3{color:var(--seg3);border-bottom:2px solid var(--seg3)}
+  .pn .s4{color:var(--seg4);border-bottom:2px solid var(--seg4)}
+  .pn .dash{color:var(--faint)}
+  .legend{display:flex;flex-wrap:wrap;gap:5px 14px;margin-top:9px;font-size:11px;color:var(--muted)}
+  .legend i{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:5px}
+  .copyrow{display:flex;gap:8px;margin-top:11px}
+  .copybtn{
+    flex:1;font-family:var(--sans);font-size:12.5px;font-weight:600;color:var(--text);
+    background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:8px;cursor:pointer;
+  }
+  .copybtn:hover{border-color:#4d5a66}
+  .copybtn.done{color:#9fdb9a;border-color:#9fdb9a}
+
+  table.decode{width:100%;border-collapse:collapse;font-size:12px}
+  table.decode td{padding:5px 4px;border-bottom:1px solid #262d34;vertical-align:top}
+  table.decode td.c{font-family:var(--mono);font-size:12.5px;white-space:nowrap;padding-right:12px}
+  table.decode tr:last-child td{border-bottom:none}
+  td.c.k1{color:var(--seg1)} td.c.k2{color:var(--seg2)} td.c.k3{color:var(--seg3)} td.c.k4{color:var(--seg4)}
+  table.decode td.m{color:var(--muted)}
+
+  .parts .row{display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-bottom:1px solid #262d34;font-size:12.5px}
+  .parts .row:last-child{border-bottom:none}
+  .parts .n{color:var(--muted)}
+  .parts .p{font-family:var(--mono);white-space:nowrap}
+
+  .preview{display:flex;align-items:center;gap:18px}
+  .pv-stage{
+    width:120px;height:120px;flex:none;border-radius:10px;
+    background:linear-gradient(160deg,#3a424b,#262c33);
+    border:1px solid var(--line);
+    display:flex;align-items:center;justify-content:center;
+  }
+  .pv-flange{display:flex;align-items:center;justify-content:center;transition:all .25s ease}
+  .pv-btn{position:relative;transition:all .25s ease;border:3px solid #171b1f;box-shadow:inset 0 2px 4px rgba(255,255,255,.15), 0 1px 3px rgba(0,0,0,.5)}
+  .pv-note{font-size:11.5px;color:var(--muted)}
+
+  ul.notes{list-style:none}
+  ul.notes li{font-size:12px;color:var(--muted);padding:5px 0 5px 16px;position:relative;border-bottom:1px solid #262d34}
+  ul.notes li:last-child{border-bottom:none}
+  ul.notes li::before{content:"▲";position:absolute;left:0;top:6px;font-size:8px;color:var(--seg2)}
+
+  footer{max-width:1100px;margin:10px auto 0;padding:0 20px;font-size:11px;color:var(--faint);line-height:1.7}
+  footer a{color:var(--muted)}
+  @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>NKK 照光式押ボタンスイッチ 型番コンフィギュレータ</h1>
+  <p>仕様を選ぶだけで、オーダー形名と構成部品（本体・発光素子・操作部）の形名を組み立てます。形名体系はNKK公式カタログ準拠。</p>
+  <div class="tabs" role="tablist">
+    <button class="tab on" id="tab-yb" role="tab">YB<span class="sub">短胴形 φ16取付け</span></button>
+    <button class="tab" id="tab-yb2" role="tab">YB2<span class="sub">薄形防水 φ22／□21取付け</span></button>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="steps">
+
+    <section class="step">
+      <h2><span class="tag" style="background:var(--muted)">⇄</span>型番から逆引き</h2>
+      <div class="decoderow">
+        <input class="decode-in" id="decode-in" placeholder="例: YB-15WSKS1-119BBS ／ YB2-15CWCKS1-61MGNS ／ 本体形名のみも可" spellcheck="false" autocomplete="off">
+        <button class="copybtn" style="flex:none;padding:8px 18px" id="decode-btn">解読</button>
+      </div>
+      <div class="decode-msg" id="decode-msg"></div>
+    </section>
+
+    <section class="step">
+      <h2><span class="tag t1">①</span>スイッチ本体</h2>
+      <div class="fixed-note" id="body-fixed" style="display:none"></div>
+      <div class="field"><div class="lbl">回路</div><div class="opts" id="f-pole"></div></div>
+      <div class="field"><div class="lbl">機能動作</div><div class="opts" id="f-func"></div></div>
+      <div class="field" id="fw-wp"><div class="lbl">防水</div><div class="opts" id="f-wp"></div>
+        <div class="hint" id="wp-hint"></div></div>
+      <div class="field" id="fw-mount"><div class="lbl">取付け</div><div class="opts" id="f-mount"></div></div>
+      <div class="field"><div class="lbl">操作部形状</div><div class="opts" id="f-shape"></div></div>
+      <div class="field" id="fw-flange"><div class="lbl">本体（フランジ）の色</div><div class="opts" id="f-flange"></div>
+        <div class="hint" id="flange-hint"></div></div>
+      <div class="field"><div class="lbl">接点・端子</div><div class="opts" id="f-contact"></div>
+        <div class="hint" id="contact-hint"></div></div>
+    </section>
+
+    <section class="step">
+      <h2><span class="tag t2">②</span>発光素子</h2>
+      <div class="field"><div class="lbl">照光方式</div><div class="opts" id="f-illum"></div>
+        <div class="hint" id="illum-hint"></div></div>
+      <div class="field" id="fw-color"><div class="lbl">発光色</div><div class="opts" id="f-ledcolor"></div></div>
+      <div class="field" id="fw-volt"><div class="lbl">電圧・抵抗</div><div class="opts" id="f-volt"></div>
+        <div class="hint" id="volt-hint"></div></div>
+    </section>
+
+    <section class="step">
+      <h2><span class="tag t3">③</span>操作部（ボタン）</h2>
+      <div class="field"><div class="lbl" id="btn-lbl">色</div><div class="opts" id="f-btncolor"></div>
+        <div class="hint" id="btn-hint"></div></div>
+    </section>
+
+    <section class="step">
+      <h2><span class="tag t4">④</span>販売形態</h2>
+      <div class="field"><div class="opts" id="f-sale"></div>
+        <div class="hint">セット＝組立て済み／キット＝一括包装（未組立）／個別＝部品ごとに手配</div></div>
+    </section>
+  </div>
+
+  <div class="result">
+    <div class="card">
+      <h3>オーダー形名</h3>
+      <div class="pn" id="pn"></div>
+      <div class="legend" id="legend"></div>
+      <div class="copyrow">
+        <button class="copybtn" id="copy-full">形名をコピー</button>
+        <button class="copybtn" id="copy-parts">部品リストをコピー</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>形名の分解</h3>
+      <table class="decode"><tbody id="decode"></tbody></table>
+    </div>
+
+    <div class="card">
+      <h3>構成部品（個別形名）</h3>
+      <div class="parts" id="parts"></div>
+    </div>
+
+    <div class="card">
+      <h3>操作部イメージ</h3>
+      <div class="preview">
+        <div class="pv-stage"><div class="pv-flange" id="pvf"><div class="pv-btn" id="pv"></div></div></div>
+        <div class="pv-note" id="pv-note"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>注意事項</h3>
+      <ul class="notes" id="notes"></ul>
+    </div>
+  </div>
+</div>
+
+<footer>
+  出典：NKKスイッチズ 照光式押ボタンスイッチ YB／YB2シリーズ カタログ（形名体系・組立て販売形名）。本ツールは選定補助用の非公式ツールです。受注・販売中止品が含まれる可能性があるため、発注前に
+  <a href="https://www.nkkswitches.co.jp/product/series/illuminated_pushbutton_YB.html" target="_blank" rel="noopener">YBシリーズ</a>／<a href="https://www.nkkswitches.co.jp/product/series/illuminated_pushbutton_YB2.html" target="_blank" rel="noopener">YB2シリーズ</a>
+  の公式ページで現行品であることを確認してください。<br>
+  付属品 — YB：防塵カバー AT-4115／スプリングバック形ガードバリア AT-4175／保持形ガードバリア AT-4072（非防水形のみ）／ゴム座金 AT-541。YB2：ソケット AT-716・717（はんだ端子 単極・2極）／AT-718・719（PC端子 単極・2極）。共通：締付治具 AT-106。
+</footer>
+
+<script>
+"use strict";
+
+/* ================================================================
+   YBシリーズ マスタデータ（pushbutton_YB.pdf 準拠）
+================================================================ */
+const YB = {
+  POLES: [{id:"1",label:"単極双投",code:"1"},{id:"2",label:"2極双投",code:"2"}],
+  FUNCS: [{id:"5",label:"モーメンタリ ON-(ON)",code:"5"},{id:"6",label:"ロック ON-ON",code:"6"}],
+  WPS:   [{id:"wp",label:"防水形（IP65）",code:"W"},{id:"np",label:"非防水形",code:"—"}],
+  MOUNTS:[{id:"screw",label:"ねじ取付け"},{id:"snap",label:"スナップイン"}],
+  SHAPES:[{id:"round",label:"丸形"},{id:"square",label:"角形"},{id:"rect",label:"長角形"}],
+  CONTACTS:[
+    {id:"S1",label:"銀接点",code:"S1",hint:"3A 125V AC／3A 250V AC／3A 30V DC"},
+    {id:"G4",label:"金メッキ接点",code:"G4",hint:"微小電流用 0.4VA MAX・28V MAX（20mV〜28V／0.1mA〜0.1A）"},
+  ],
+  BODY_SHAPE:{
+    wp:{round:"WC",square:"WS",rect:"WR"},
+    screw:{round:"C",square:"S",rect:"R"},
+    snap:{round:"M",square:"K",rect:"N"},
+  },
+  ILLUMS:[
+    {id:"hi1r",label:"超高輝度LED 輝度1（抵抗内蔵）",hint:"AT-634。定格電圧でそのまま使用可（5V:黒／12V:水色／24V:灰色ホルダ）"},
+    {id:"hi1n",label:"超高輝度LED 輝度1（抵抗なし）",hint:"AT-628。外部に制限抵抗が必要"},
+    {id:"hi2",label:"超高輝度LED 輝度2（青・緑・白）",hint:"AT-625/632/631。抵抗なし・静電気対策必須"},
+    {id:"bi",label:"2色発光LED（赤／緑）",hint:"AT-621。1灯で赤・緑を切替え"},
+    {id:"partial",label:"部分照光（LED内蔵ボタン）",hint:"ボタンにLED内蔵。発光素子の別手配は不要"},
+    {id:"lamp",label:"白熱球（ランプ）",hint:"AT-611。着色ボタンと組み合わせ"},
+  ],
+  LED_COLORS:{
+    lamp:[],
+    hi1r:[{id:"M",label:"緑"},{id:"R",label:"赤"},{id:"Y",label:"黄"}],
+    hi1n:[{id:"M",label:"緑"},{id:"R",label:"赤"},{id:"Y",label:"黄"}],
+    hi2:[{id:"B",label:"青"},{id:"M",label:"緑"},{id:"W",label:"白"}],
+    bi:[{id:"RM",label:"赤／緑（2色）"}],
+    partial:[{id:"0M",label:"緑"},{id:"0R",label:"赤"},{id:"0Y",label:"黄"},{id:"RM",label:"赤／緑（2色）"}],
+  },
+  VOLTS:{
+    lamp:[{id:"5",label:"5V",code:"119"},{id:"12",label:"12V",code:"129"},{id:"28",label:"28V",code:"149"}],
+    hi1r:[{id:"05",label:"5V 抵抗内蔵",pre:"41"},{id:"12",label:"12V 抵抗内蔵",pre:"42"},{id:"24",label:"24V 抵抗内蔵",pre:"43"}],
+    hi1n:[{id:"00",label:"抵抗なし",pre:"49"}],
+    hi2:[{id:"00",label:"抵抗なし",pre:"59"}],
+    bi:[{id:"05",label:"5V 抵抗付",code:"312"},{id:"12",label:"12V 抵抗付",code:"322"},{id:"24",label:"24V 抵抗付",code:"332"},{id:"00",label:"抵抗なし",code:"392"}],
+    partial:[{id:"05",label:"5V 抵抗内蔵"},{id:"12",label:"12V 抵抗内蔵"},{id:"24",label:"24V 抵抗内蔵"},{id:"00",label:"抵抗なし"}],
+  },
+  PARTIAL_CODE:{
+    "05":{"0M":"31M","0R":"31R","0Y":"31Y","RM":"311"},
+    "12":{"0M":"32M","0R":"32R","0Y":"32Y","RM":"321"},
+    "24":{"0M":"33M","0R":"33R","0Y":"33Y","RM":"331"},
+    "00":{"0M":"39M","0R":"39R","0Y":"39Y","RM":"391"},
+  },
+  ORDER_SHAPE:{
+    lamp:{round:"A",square:"B",rect:"C"},
+    bi:{round:"D",square:"E",rect:"F"},
+    hi1r:{round:"D",square:"E",rect:"F"},
+    hi1n:{round:"D",square:"E",rect:"F"},
+    hi2:{round:"D",square:"E",rect:"F"},
+    partial:{round:"G",square:"H",rect:"J"},
+  },
+  BTN_SHAPE:{round:"C",square:"S",rect:"R"},
+};
+
+/* ================================================================
+   YB2シリーズ マスタデータ（現行カタログ illuminated_YB2 準拠）
+   ・防水形／ねじ取付けのみ。丸形（φ22）・角形（□21）
+   ・フランジ色：K（黒）／P（ステンレス調）※旧版はS（シルバー）
+================================================================ */
+const YB2 = {
+  POLES: YB.POLES,
+  FUNCS: YB.FUNCS,
+  SHAPES:[{id:"round",label:"丸形（φ22取付け）"},{id:"square",label:"角形（□21取付け）"}],
+  FLANGES:[
+    {id:"K",label:"黒",code:"K"},
+    {id:"P",label:"ステンレス調",code:"P"},
+    {id:"S",label:"シルバー（旧記号）",code:"S"},
+  ],
+  CONTACTS: YB.CONTACTS,
+  ILLUMS:[
+    {id:"res",label:"超高輝度LED（抵抗内蔵）緑・赤・黄",hint:"緑:AT-636／赤・黄:AT-634。定格電圧でそのまま使用可（5V:黒／12V:水色／24V:灰色ホルダ）"},
+    {id:"nores",label:"超高輝度LED（抵抗なし）赤・黄",hint:"AT-628。外部に制限抵抗が必要"},
+    {id:"bmw",label:"超高輝度LED（抵抗なし）青・緑・白",hint:"AT-625/632/631。外部に制限抵抗が必要・静電気対策必須"},
+    {id:"none",label:"非照光（発光素子なし）",hint:"記号999。ステンレス調ボタン等と組み合わせて非照光スイッチとして使用"},
+  ],
+  LED_COLORS:{
+    res:[{id:"M",label:"緑"},{id:"R",label:"赤"},{id:"Y",label:"黄"}],
+    nores:[{id:"R",label:"赤"},{id:"Y",label:"黄"}],
+    bmw:[{id:"B",label:"青"},{id:"M",label:"緑"},{id:"W",label:"白"}],
+    none:[],
+  },
+  VOLTS:{
+    res:[{id:"05",label:"5V 抵抗内蔵"},{id:"12",label:"12V 抵抗内蔵"},{id:"24",label:"24V 抵抗内蔵"}],
+    nores:[{id:"00",label:"抵抗なし"}],
+    bmw:[{id:"00",label:"抵抗なし"}],
+    none:[{id:"--",label:"—（発光素子なし）"}],
+  },
+  // 素子記号：緑抵抗内蔵は61/62/63、赤黄抵抗内蔵は41/42/43
+  RES_PRE:{ "05":{M:"61M",R:"41R",Y:"41Y"}, "12":{M:"62M",R:"42R",Y:"42Y"}, "24":{M:"63M",R:"43R",Y:"43Y"} },
+  // 操作部：記号 → {label, pn(丸/角), 適用}
+  BTNS:{
+    round:{
+      res:   [ {id:"N",op:"GN",label:"全面照光 透明／乳白",pn:"YB2-CACN"},
+               {id:"SAME",label:"全面照光 LED同色"},
+               {id:"H",op:"GH",label:"全面照光 ハーフミラー（ステンレス調）",pn:"YB2-CAHN"},
+               {id:"KS",op:"KS",label:"外輪照光 透明／銀",pn:"YB2-CGCS"} ],
+      nores: null, // res と同じ（後で複製）
+      bmw:   [ {id:"B",op:"GB",label:"全面照光 透明／乳白",pn:"YB2-CBCN"},
+               {id:"C",op:"GC",label:"全面照光 ハーフミラー（ステンレス調）",pn:"YB2-CBHN"},
+               {id:"KS",op:"KS",label:"外輪照光 透明／銀",pn:"YB2-CGCS"} ],
+      none:  [ {id:"P",op:"GP",label:"非照光 ステンレス調",pn:"YB2-CNPN"},
+               {id:"H",op:"GH",label:"ハーフミラー（ステンレス調）",pn:"YB2-CAHN"} ],
+    },
+    square:{
+      res:   [ {id:"N",op:"HN",label:"全面照光 透明／乳白",pn:"YB2-SACN"},
+               {id:"SAME",label:"全面照光 LED同色"},
+               {id:"H",op:"HH",label:"ハーフミラー（ステンレス調）",pn:"YB2-SAHN"} ],
+      nores: null,
+      bmw:   [ {id:"N",op:"HN",label:"全面照光 透明／乳白",pn:"YB2-SACN"},
+               {id:"H",op:"HH",label:"ハーフミラー（ステンレス調）",pn:"YB2-SAHN"} ],
+      none:  [ {id:"P",op:"HP",label:"非照光 ステンレス調",pn:"YB2-SNPN"},
+               {id:"H",op:"HH",label:"ハーフミラー（ステンレス調）",pn:"YB2-SAHN"} ],
+    },
+  },
+  SAME_BTN:{ // LED同色ボタン（赤緑黄LED用）
+    round:{M:{op:"GM",pn:"YB2-CAMN",label:"全面照光 緑／乳白"},R:{op:"GR",pn:"YB2-CARN",label:"全面照光 赤／乳白"},Y:{op:"GY",pn:"YB2-CAYN",label:"全面照光 黄／乳白"}},
+    square:{M:{op:"HM",pn:"YB2-SAMN",label:"全面照光 緑／乳白"},R:{op:"HR",pn:"YB2-SARN",label:"全面照光 赤／乳白"},Y:{op:"HY",pn:"YB2-SAYN",label:"全面照光 黄／乳白"}},
+  },
+};
+YB2.BTNS.round.nores = YB2.BTNS.round.res;
+YB2.BTNS.square.nores = YB2.BTNS.square.res;
+
+const SALES = [
+  {id:"S",label:"セット（組立て）",code:"S"},
+  {id:"K",label:"キット（一括包装）",code:"K"},
+  {id:"P",label:"個別部品で手配",code:""},
+];
+
+/* ================================================================ 状態 */
+let series = "yb";
+const stYB  = {pole:"1",func:"5",wp:"np",mount:"screw",shape:"square",contact:"S1",
+               illum:"hi1r",ledColor:"M",volt:"05",btnColor:"N",sale:"S"};
+const stYB2 = {pole:"1",func:"5",shape:"round",flange:"K",contact:"S1",
+               illum:"res",ledColor:"M",volt:"05",btn:"N",sale:"S"};
+
+/* ================================================================
+   YB系 導出（旧版と同一ロジック・検証済み）
+================================================================ */
+function ybBody(st){
+  const mountKey = st.wp==="wp" ? "wp" : st.mount;
+  const shapeCode = YB.BODY_SHAPE[mountKey][st.shape];
+  return {pn:"YB-"+st.pole+st.func+shapeCode+"K"+st.contact, shapeCode};
+}
+function ybElemCode(st){
+  switch(st.illum){
+    case "lamp": return YB.VOLTS.lamp.find(v=>v.id===st.volt).code;
+    case "bi":   return YB.VOLTS.bi.find(v=>v.id===st.volt).code;
+    case "hi1r": return YB.VOLTS.hi1r.find(v=>v.id===st.volt).pre + st.ledColor;
+    case "hi1n": return "49"+st.ledColor;
+    case "hi2":  return "59"+st.ledColor;
+    case "partial": return YB.PARTIAL_CODE[st.volt][st.ledColor];
+  }
+}
+function ybLedPart(st){
+  switch(st.illum){
+    case "lamp": return "AT-611-"+st.volt+"V";
+    case "bi":   return "AT-621-RM"+st.volt;
+    case "hi1r": return "AT-634-"+st.ledColor+st.volt;
+    case "hi1n": return "AT-628-"+st.ledColor;
+    case "hi2":  return {B:"AT-625",M:"AT-632",W:"AT-631"}[st.ledColor];
+    case "partial": return null;
+  }
+}
+function ybBtnPart(st){
+  const s = YB.BTN_SHAPE[st.shape];
+  switch(st.illum){
+    case "lamp": return "YB-"+s+"H"+st.btnColor+"W";
+    case "bi":   return "YB-"+s+"LCN";
+    case "hi2":  return "YB-"+s+"LCB";
+    case "hi1r":
+    case "hi1n": return "YB-"+s+"LC"+st.btnColor;
+    case "partial": return "YB-P"+s+st.btnColor+st.ledColor+st.volt;
+  }
+}
+function ybBtnColorOptions(illum, ledColor){
+  switch(illum){
+    case "lamp":
+      return {lbl:"ボタンの色（フィルタ：白）",hint:"",opts:[
+        {id:"B",label:"青"},{id:"M",label:"緑"},{id:"R",label:"赤"},{id:"W",label:"白"},{id:"Y",label:"黄"}]};
+    case "bi":
+      return {lbl:"ボタン／プレート",hint:"2色発光は 透明ボタン／乳白プレート 固定です",opts:[{id:"N",label:"透明／乳白"}]};
+    case "hi2":
+      return {lbl:"ボタン／プレート",hint:"輝度レベル2はプレート乳白固定です",opts:[{id:"B",label:"透明／乳白"}]};
+    case "hi1r":
+    case "hi1n":{
+      const map = {M:{id:"M",label:"透明／緑"},R:{id:"R",label:"透明／赤"},Y:{id:"Y",label:"透明／黄"}};
+      const opts = [{id:"N",label:"透明／乳白"}];
+      if(map[ledColor]) opts.push(map[ledColor]);
+      return {lbl:"ボタン／プレート",hint:"プレートはLED発光色と同色か乳白のみ選択可（カタログ規定）",opts};
+    }
+    case "partial":
+      return {lbl:"操作部（プレート）の色",hint:"",opts:[
+        {id:"K",label:"黒"},{id:"M",label:"緑"},{id:"R",label:"赤"},{id:"W",label:"白"},{id:"Y",label:"黄"}]};
+  }
+}
+function ybNormalize(st){
+  if(st.wp==="wp") st.mount = "screw";
+  const colors = YB.LED_COLORS[st.illum];
+  if(colors.length && !colors.some(c=>c.id===st.ledColor)) st.ledColor = colors[0].id;
+  if(!YB.VOLTS[st.illum].some(v=>v.id===st.volt)) st.volt = YB.VOLTS[st.illum][0].id;
+  const bc = ybBtnColorOptions(st.illum, st.ledColor);
+  if(!bc.opts.some(o=>o.id===st.btnColor)) st.btnColor = bc.opts[0].id;
+}
+
+/* ================================================================
+   YB2系 導出
+================================================================ */
+function yb2Body(st){
+  const shapeCode = st.shape==="round" ? "C" : "S";
+  return {pn:"YB2-"+st.pole+st.func+"CW"+shapeCode+st.flange+st.contact, shapeCode:"CW"+shapeCode};
+}
+function yb2ElemCode(st){
+  switch(st.illum){
+    case "res":   return YB2.RES_PRE[st.volt][st.ledColor];
+    case "nores": return "49"+st.ledColor;
+    case "bmw":   return "59"+st.ledColor;
+    case "none":  return "999";
+  }
+}
+function yb2LedPart(st){
+  switch(st.illum){
+    case "res":  return st.ledColor==="M" ? "AT-636-M"+st.volt : "AT-634-"+st.ledColor+st.volt;
+    case "nores":return "AT-628-"+st.ledColor;
+    case "bmw":  return {B:"AT-625",M:"AT-632",W:"AT-631"}[st.ledColor];
+    case "none": return null;
+  }
+}
+function yb2BtnOptions(st){
+  const list = YB2.BTNS[st.shape][st.illum].map(o=>{
+    if(o.id==="SAME"){
+      const s = YB2.SAME_BTN[st.shape][st.ledColor];
+      return s ? {id:"SAME",op:s.op,label:s.label,pn:s.pn} : null;
+    }
+    return o;
+  }).filter(Boolean);
+  return list;
+}
+function yb2BtnSel(st){
+  const list = yb2BtnOptions(st);
+  return list.find(o=>o.id===st.btn) || list[0];
+}
+function yb2Normalize(st){
+  const colors = YB2.LED_COLORS[st.illum];
+  if(colors.length && !colors.some(c=>c.id===st.ledColor)) st.ledColor = colors[0].id;
+  if(!YB2.VOLTS[st.illum].some(v=>v.id===st.volt)) st.volt = YB2.VOLTS[st.illum][0].id;
+  const list = yb2BtnOptions(st);
+  if(!list.some(o=>o.id===st.btn)) st.btn = list[0].id;
+}
+
+/* ================================================================ 描画共通 */
+const $ = id => document.getElementById(id);
+
+function renderOpts(elId, list, cur, onPick, disabledFn){
+  const el = $(elId);
+  el.innerHTML = "";
+  list.forEach(item=>{
+    const b = document.createElement("button");
+    b.className = "opt" + (item.id===cur ? " on" : "");
+    b.type = "button";
+    b.innerHTML = item.label + (item.codeDisp ? '<span class="code">'+item.codeDisp+'</span>' : "");
+    if(disabledFn && disabledFn(item)) b.disabled = true;
+    b.onclick = ()=>{ onPick(item.id); normalizeCur(); render(); };
+    el.appendChild(b);
+  });
+}
+function normalizeCur(){ series==="yb" ? ybNormalize(stYB) : yb2Normalize(stYB2); }
+
+const LED_HEX = {M:"#2fd06f",R:"#ff4d4d",Y:"#f2c94c",B:"#3d8bff",W:"#f5f7fa",
+                 "0M":"#2fd06f","0R":"#ff4d4d","0Y":"#f2c94c",RM:"split"};
+const BTN_HEX = {B:"#2f6fd0",M:"#2a9d5c",R:"#d04040",W:"#e8e8e4",Y:"#e0b830",K:"#26292c",N:"#e9ede9"};
+const STEEL = "linear-gradient(135deg,#cfd4d8 0%,#9aa2a8 40%,#e2e6e9 60%,#aab1b7 100%)";
+function hexA(h,a){const n=parseInt(h.slice(1),16);return "rgba("+((n>>16)&255)+","+((n>>8)&255)+","+(n&255)+","+a+")";}
+function lighten(h){const n=parseInt(h.slice(1),16);const r=Math.min(255,((n>>16)&255)+70),g=Math.min(255,((n>>8)&255)+70),b=Math.min(255,(n&255)+70);return "rgb("+r+","+g+","+b+")";}
+function mix(p,l,pa,la){const a=parseInt(p.slice(1),16),b=parseInt(l.slice(1),16);
+  const f=(x,y)=>Math.round(x*pa+y*la);
+  return "rgb("+f((a>>16)&255,(b>>16)&255)+","+f((a>>8)&255,(b>>8)&255)+","+f(a&255,b&255)+")";}
+const glowOf = c => c==="split"
+  ? "0 0 22px 4px rgba(255,77,77,.5), 0 0 22px 4px rgba(47,208,111,.4)"
+  : "0 0 22px 5px " + hexA(c,.55);
+
+/* ================================================================ 描画：YB */
+function renderYB(){
+  const st = stYB;
+  $("body-fixed").style.display = "none";
+  $("fw-wp").style.display = "";
+  $("fw-mount").style.display = "";
+  $("fw-flange").style.display = "none";
+
+  renderOpts("f-pole", YB.POLES.map(o=>({...o,codeDisp:o.code})), st.pole, v=>st.pole=v);
+  renderOpts("f-func", YB.FUNCS.map(o=>({...o,codeDisp:o.code})), st.func, v=>st.func=v);
+  renderOpts("f-wp", YB.WPS.map(o=>({...o,codeDisp:o.code})), st.wp, v=>st.wp=v);
+  $("wp-hint").textContent = st.wp==="wp" ? "防水形はねじ取付けのみ（取付パネル厚 0.5〜5mm）" : "";
+  renderOpts("f-mount", YB.MOUNTS, st.mount, v=>st.mount=v, item=> st.wp==="wp" && item.id==="snap");
+  renderOpts("f-shape", YB.SHAPES, st.shape, v=>st.shape=v);
+  renderOpts("f-contact", YB.CONTACTS.map(o=>({...o,codeDisp:o.code})), st.contact, v=>st.contact=v);
+  $("contact-hint").textContent = YB.CONTACTS.find(c=>c.id===st.contact).hint;
+
+  renderOpts("f-illum", YB.ILLUMS, st.illum, v=>st.illum=v);
+  $("illum-hint").textContent = YB.ILLUMS.find(i=>i.id===st.illum).hint;
+  const colors = YB.LED_COLORS[st.illum];
+  $("fw-color").style.display = colors.length ? "" : "none";
+  if(colors.length) renderOpts("f-ledcolor", colors, st.ledColor, v=>st.ledColor=v);
+  $("fw-volt").style.display = "";
+  renderOpts("f-volt", YB.VOLTS[st.illum], st.volt, v=>st.volt=v);
+  $("volt-hint").textContent = (st.volt==="00")
+    ? "抵抗なし：外部に制限抵抗が必要です（R＝(E−VF)／IF、W数は2〜3倍を推奨）" : "";
+  const bc = ybBtnColorOptions(st.illum, st.ledColor);
+  $("btn-lbl").textContent = bc.lbl;
+  renderOpts("f-btncolor", bc.opts, st.btnColor, v=>st.btnColor=v);
+  $("btn-hint").textContent = bc.hint;
+  renderOpts("f-sale", SALES, st.sale, v=>st.sale=v);
+
+  /* 結果 */
+  const body = ybBody(st);
+  const e = ybElemCode(st);
+  const sLetter = YB.ORDER_SHAPE[st.illum][st.shape];
+  const led = ybLedPart(st);
+  const btn = ybBtnPart(st);
+  const isSetKit = st.sale!=="P";
+
+  if(isSetKit){
+    $("pn").innerHTML =
+      '<span class="s1">'+body.pn+'</span><span class="dash">-</span>'+
+      '<span class="s2">'+e+'</span><span class="s3">'+sLetter+st.btnColor+'</span>'+
+      '<span class="s4">'+st.sale+'</span>';
+    setLegend(st.sale);
+  } else {
+    $("pn").innerHTML = '<span class="s1">'+body.pn+'</span><span class="dash"> ＋ 部品個別手配</span>';
+    setLegendBodyOnly();
+  }
+
+  const wpTxt = st.wp==="wp" ? "防水形（IP65）" : "非防水形";
+  const mountTxt = st.wp==="wp" ? "ねじ取付け（防水はねじのみ）" : YB.MOUNTS.find(m=>m.id===st.mount).label;
+  const shapeTxt = YB.SHAPES.find(s=>s.id===st.shape).label;
+  const rows = [
+    ["k1","YB-","シリーズ名"],
+    ["k1",st.pole,YB.POLES.find(p=>p.id===st.pole).label],
+    ["k1",st.func,YB.FUNCS.find(f=>f.id===st.func).label],
+    ["k1",body.shapeCode,wpTxt+"・"+shapeTxt+"・"+mountTxt],
+    ["k1","K","本体の色：黒"],
+    ["k1",st.contact,YB.CONTACTS.find(c=>c.id===st.contact).label+"・はんだ端子（タブ#110兼用）"],
+  ];
+  if(isSetKit){
+    rows.push(["k2",e,ybElemDesc(st)]);
+    rows.push(["k3",sLetter+st.btnColor,"操作部："+shapeTxt+"・"+ybBtnDesc(st)]);
+    rows.push(["k4",st.sale,st.sale==="S"?"セット（組立て）販売":"キット（一括包装）販売"]);
+  }
+  drawDecode(rows);
+
+  let partsHtml = partRow("スイッチ本体", body.pn);
+  if(st.illum==="partial"){
+    partsHtml += partRow("LED内蔵ボタン（発光素子含む）", btn);
+  } else {
+    partsHtml += partRow("発光素子 "+(st.illum==="lamp"?"ランプ":"LED"), led);
+    partsHtml += partRow("操作部ボタン", btn);
+  }
+  $("parts").innerHTML = partsHtml;
+
+  const notes = [];
+  if(st.volt==="00"||st.illum==="hi1n"||st.illum==="hi2")
+    notes.push("抵抗なしタイプ：電源電圧に応じた制限抵抗を外付けしてください。R＝(E−VF)／IF"+ybVfIf(st));
+  if(st.illum==="hi2") notes.push("輝度レベル2 LEDは静電気に弱いため、十分なESD対策のうえ取扱ってください。");
+  if(st.illum==="lamp"&&st.volt==="28") notes.push("28V白熱球はDC電圧使用で寿命が短くなる場合あり。振動・衝撃環境ではLEDまたは5V/12Vを推奨。");
+  if(st.contact==="G4") notes.push("金メッキ接点は微小電流専用（0.4VA MAX・28V MAX）。3A負荷には銀接点（S1）を選定してください。");
+  if(st.wp==="wp") notes.push("防水形に取付けたボタンは嵌合部が変形するため、非防水形本体へ流用できません。");
+  if(st.wp!=="wp"&&st.mount==="snap") notes.push("スナップイン取付けは取付パネル厚1〜3.5mm。回転止め用の小穴（ガイド）加工が必要です。");
+  if(st.func==="6") notes.push("ロック形の機械的耐久性は20万回以上（モーメンタリ形は100万回以上）。操作部の取外しはロック解除状態で行ってください。");
+  notes.push("使用温度範囲：照光式 −25〜＋50℃（非照光式 −25〜＋70℃、防塵カバー付は0℃〜）。");
+  $("notes").innerHTML = notes.map(n=>"<li>"+n+"</li>").join("");
+
+  /* プレビュー */
+  const pv=$("pv"), pvf=$("pvf");
+  pvf.style.width="auto"; pvf.style.height="auto"; pvf.style.borderRadius="0"; pvf.style.background="none"; pvf.style.border="none";
+  pv.style.width = st.shape==="rect" ? "88px":"62px";
+  pv.style.height = "62px";
+  pv.style.borderRadius = st.shape==="round" ? "50%":"8px";
+  let note="";
+  if(st.illum==="lamp"){
+    const c = BTN_HEX[st.btnColor];
+    pv.style.background = "radial-gradient(circle at 35% 30%, "+lighten(c)+", "+c+")";
+    pv.style.boxShadow = "inset 0 2px 4px rgba(255,255,255,.25), "+glowOf(c);
+    pv.innerHTML=""; note="着色ボタン全面照光（白熱球）";
+  } else if(st.illum==="partial"){
+    const base = BTN_HEX[st.btnColor];
+    const led2 = LED_HEX[st.ledColor];
+    const dot = led2==="split" ? "linear-gradient(90deg,#ff4d4d 50%,#2fd06f 50%)" : led2;
+    pv.style.background = base;
+    pv.style.boxShadow = "inset 0 2px 4px rgba(255,255,255,.15), 0 1px 3px rgba(0,0,0,.5)";
+    pv.innerHTML = '<span style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:16px;height:16px;border-radius:50%;background:'+dot+';box-shadow:'+glowOf(led2)+'"></span>';
+    note="部分照光：プレート面の窓部のみ点灯";
+  } else {
+    const led2 = LED_HEX[st.illum==="bi" ? "RM" : st.ledColor];
+    const plate = (st.btnColor==="N"||(st.btnColor==="B"&&st.illum==="hi2")) ? BTN_HEX.N : (BTN_HEX[st.btnColor]||BTN_HEX.N);
+    if(led2==="split"){
+      pv.style.background = "linear-gradient(90deg,#ff9a9a 50%,#9ae8b6 50%)";
+      pv.style.boxShadow = "inset 0 2px 4px rgba(255,255,255,.3), "+glowOf("split");
+      note="2色発光：赤／緑を電気的に切替え";
+    } else {
+      pv.style.background = "radial-gradient(circle at 40% 35%, "+mix(plate,led2,.35,.65)+", "+mix(plate,led2,.25,.55)+")";
+      pv.style.boxShadow = "inset 0 2px 4px rgba(255,255,255,.3), "+glowOf(led2);
+      note = st.illum==="hi2" ? "輝度レベル2：高輝度全面照光" : "透明ボタン＋プレート全面照光";
+    }
+    pv.innerHTML="";
+  }
+  $("pv-note").textContent = note;
+}
+
+/* ================================================================ 描画：YB2 */
+function renderYB2(){
+  const st = stYB2;
+  $("body-fixed").style.display = "";
+  $("body-fixed").textContent = "YB2は防水形（IP65）・ねじ取付け・切換接点（C）固定です。取付パネル厚 0.5〜5mm、パネル前面高さ1.8mm。";
+  $("fw-wp").style.display = "none";
+  $("fw-mount").style.display = "none";
+  $("fw-flange").style.display = "";
+  $("wp-hint").textContent = "";
+
+  renderOpts("f-pole", YB2.POLES.map(o=>({...o,codeDisp:o.code})), st.pole, v=>st.pole=v);
+  renderOpts("f-func", YB2.FUNCS.map(o=>({...o,codeDisp:o.code})), st.func, v=>st.func=v);
+  renderOpts("f-shape", YB2.SHAPES, st.shape, v=>st.shape=v);
+  renderOpts("f-flange", YB2.FLANGES.map(o=>({...o,codeDisp:o.code})), st.flange, v=>st.flange=v);
+  $("flange-hint").textContent = "旧カタログのシルバー（記号S）は現行カタログでステンレス調（記号P）に変更されています。";
+  renderOpts("f-contact", YB2.CONTACTS.map(o=>({...o,codeDisp:o.code})), st.contact, v=>st.contact=v);
+  $("contact-hint").textContent = YB2.CONTACTS.find(c=>c.id===st.contact).hint;
+
+  renderOpts("f-illum", YB2.ILLUMS, st.illum, v=>st.illum=v);
+  $("illum-hint").textContent = YB2.ILLUMS.find(i=>i.id===st.illum).hint;
+  const colors = YB2.LED_COLORS[st.illum];
+  $("fw-color").style.display = colors.length ? "" : "none";
+  if(colors.length) renderOpts("f-ledcolor", colors, st.ledColor, v=>st.ledColor=v);
+  $("fw-volt").style.display = st.illum==="none" ? "none" : "";
+  if(st.illum!=="none") renderOpts("f-volt", YB2.VOLTS[st.illum], st.volt, v=>st.volt=v);
+  $("volt-hint").textContent = (st.illum==="nores"||st.illum==="bmw")
+    ? "抵抗なし：外部に制限抵抗が必要です（R＝(E−VF)／IF、W数は2〜3倍を推奨）" : "";
+
+  const btnList = yb2BtnOptions(st).map(o=>({...o,codeDisp:o.op}));
+  $("btn-lbl").textContent = "ボタンタイプ";
+  renderOpts("f-btncolor", btnList, st.btn, v=>st.btn=v);
+  $("btn-hint").textContent = (st.illum==="res"||st.illum==="nores")
+    ? "照光ボタンはLED発光色と同色か透明（乳白）、またはハーフミラー"+(st.shape==="round"?"／外輪照光":"")+"を選択できます。"
+    : (st.illum==="none" ? "非照光として使用します（発光素子なし）。" : "");
+  renderOpts("f-sale", SALES, st.sale, v=>st.sale=v);
+
+  /* 結果 */
+  const body = yb2Body(st);
+  const e = yb2ElemCode(st);
+  const btnSel = yb2BtnSel(st);
+  const led = yb2LedPart(st);
+  const isSetKit = st.sale!=="P";
+
+  if(isSetKit){
+    $("pn").innerHTML =
+      '<span class="s1">'+body.pn+'</span><span class="dash">-</span>'+
+      '<span class="s2">'+e+'</span><span class="s3">'+btnSel.op+'</span>'+
+      '<span class="s4">'+st.sale+'</span>';
+    setLegend(st.sale);
+  } else {
+    $("pn").innerHTML = '<span class="s1">'+body.pn+'</span><span class="dash"> ＋ 部品個別手配</span>';
+    setLegendBodyOnly();
+  }
+
+  const shapeTxt = st.shape==="round" ? "丸形" : "角形";
+  const rows = [
+    ["k1","YB2-","シリーズ名"],
+    ["k1",st.pole,YB2.POLES.find(p=>p.id===st.pole).label],
+    ["k1",st.func,YB2.FUNCS.find(f=>f.id===st.func).label],
+    ["k1","C","接点構成：切換接点（C接点）"],
+    ["k1","W","防水形（IP65）"],
+    ["k1",st.shape==="round"?"C":"S","操作部形状："+shapeTxt+"・ねじ取付け"],
+    ["k1",st.flange,"フランジの色："+YB2.FLANGES.find(f=>f.id===st.flange).label],
+    ["k1",st.contact,YB2.CONTACTS.find(c=>c.id===st.contact).label+"・はんだ端子（タブ#110兼用）"],
+  ];
+  if(isSetKit){
+    rows.push(["k2",e,yb2ElemDesc(st)]);
+    rows.push(["k3",btnSel.op,"操作部："+shapeTxt+"・"+btnSel.label]);
+    rows.push(["k4",st.sale,st.sale==="S"?"セット（組立て）販売":"キット（一括包装）販売"]);
+  }
+  drawDecode(rows);
+
+  let partsHtml = partRow("スイッチ本体", body.pn);
+  if(led) partsHtml += partRow("発光素子 LED", led);
+  partsHtml += partRow("操作部ボタン", btnSel.pn);
+  $("parts").innerHTML = partsHtml;
+
+  const notes = [];
+  if(st.illum==="nores") notes.push("抵抗なしタイプ：制限抵抗を外付けしてください。（AT-628：IF 26mA、VF 赤1.9V／黄2.0V）");
+  if(st.illum==="bmw") notes.push("抵抗なしタイプ：制限抵抗を外付けしてください。（IF 20mA、VF 青3.3V／緑3.5V／白3.6V）静電気対策も必須です。");
+  if(st.contact==="G4") notes.push("金メッキ接点は微小電流専用（0.4VA MAX・28V MAX）。3A負荷には銀接点（S1）を選定してください。");
+  if(st.func==="6") notes.push("ロック形の機械的耐久性は20万回以上（モーメンタリ形は100万回以上）。");
+  notes.push("操作部（ボタン）は取外すと側面が変形するため再使用不可。交換時は新品を使用してください。");
+  notes.push("配線省力化用ソケットあり：はんだ端子 AT-716（単極）／AT-717（2極）、PC端子 AT-718（単極）／AT-719（2極）。ソケット使用時のパネル厚は丸形0.5〜4.1mm／角形0.5〜3.2mm。");
+  notes.push("推奨締付トルク：300〜600mN・m（締付治具 AT-106）。");
+  notes.push("使用温度範囲：照光式 −25〜＋50℃（非照光式 −25〜＋70℃）。");
+  $("notes").innerHTML = notes.map(n=>"<li>"+n+"</li>").join("");
+
+  /* プレビュー：フランジ＋フラットボタン */
+  const pv=$("pv"), pvf=$("pvf");
+  const isRound = st.shape==="round";
+  pvf.style.width = "84px"; pvf.style.height = "84px";
+  pvf.style.borderRadius = isRound ? "50%" : "12px";
+  pvf.style.background = st.flange==="K"
+    ? "linear-gradient(150deg,#33383d,#1c2024)" : STEEL;
+  pvf.style.border = "1px solid #11151a";
+  pv.style.width = "58px"; pv.style.height = "58px";
+  pv.style.borderRadius = isRound ? "50%" : "8px";
+  pv.style.border = "2px solid rgba(0,0,0,.35)";
+  pv.innerHTML = "";
+  let note = "";
+  const btnId = btnSel.id, op = btnSel.op;
+  const led2 = st.illum==="none" ? null : LED_HEX[st.ledColor];
+  if(op==="KS"){ // 外輪照光
+    pv.style.background = "#20242a";
+    pv.style.boxShadow = "0 0 0 4px "+(led2?hexA(led2,.9):"#555")+", "+(led2?glowOf(led2):"none");
+    note = "外輪照光：ボタン外周リングが点灯（丸形のみ）";
+  } else if(op==="GH"||op==="HH"||op==="GC"){ // ハーフミラー
+    pv.style.background = STEEL;
+    pv.style.boxShadow = led2 ? ("inset 0 0 18px 2px "+hexA(led2,.65)+", "+glowOf(led2)) : "inset 0 2px 4px rgba(255,255,255,.3)";
+    note = led2 ? "ハーフミラー：消灯時はステンレス調、点灯時に発光色が浮かび上がる" : "ハーフミラーボタン（非照光使用）";
+  } else if(op==="GP"||op==="HP"){ // 非照光ステンレス調
+    pv.style.background = STEEL;
+    pv.style.boxShadow = "inset 0 2px 4px rgba(255,255,255,.3)";
+    note = "非照光：ステンレス調フラットボタン";
+  } else { // 全面照光（透明/乳白 or LED同色）
+    const plate = btnId==="SAME" ? (BTN_HEX[st.ledColor]||BTN_HEX.N) : BTN_HEX.N;
+    pv.style.background = "radial-gradient(circle at 40% 35%, "+mix(plate,led2,.35,.65)+", "+mix(plate,led2,.25,.55)+")";
+    pv.style.boxShadow = "inset 0 2px 4px rgba(255,255,255,.3), "+glowOf(led2);
+    note = "フラットボタン全面照光（操作面 "+(isRound?"φ19mm":"□18mm")+"）";
+  }
+  $("pv-note").textContent = note;
+}
+
+/* ================================================================ 共通部品 */
+function setLegend(sale){
+  $("legend").innerHTML =
+    '<span><i style="background:var(--seg1)"></i>本体</span>'+
+    '<span><i style="background:var(--seg2)"></i>発光素子</span>'+
+    '<span><i style="background:var(--seg3)"></i>操作部</span>'+
+    '<span><i style="background:var(--seg4)"></i>'+(sale==="S"?"セット":"キット")+'</span>';
+}
+function setLegendBodyOnly(){
+  $("legend").innerHTML = '<span><i style="background:var(--seg1)"></i>本体形名（部品は下記リストで手配）</span>';
+}
+function drawDecode(rows){
+  $("decode").innerHTML = rows.map(r=>
+    '<tr><td class="c '+r[0]+'">'+r[1]+'</td><td class="m">'+r[2]+'</td></tr>').join("");
+}
+function partRow(n,p){return '<div class="row"><span class="n">'+n+'</span><span class="p">'+p+'</span></div>';}
+
+function ybElemDesc(st){
+  const cl = ()=> (YB.LED_COLORS[st.illum].find(c=>c.id===st.ledColor)||{}).label||"";
+  const vl = ()=> YB.VOLTS[st.illum].find(v=>v.id===st.volt).label;
+  switch(st.illum){
+    case "lamp": return "白熱球 "+st.volt+"V（AT-611-"+st.volt+"V）";
+    case "bi":   return "2色発光LED 赤／緑 "+vl();
+    case "hi1r": return "超高輝度LED 輝度1 "+cl()+"・"+vl();
+    case "hi1n": return "超高輝度LED 輝度1 "+cl()+"・抵抗なし";
+    case "hi2":  return "超高輝度LED 輝度2 "+cl()+"・抵抗なし";
+    case "partial": return "部分照光LED "+cl()+"・"+vl()+"（ボタン内蔵）";
+  }
+}
+function ybBtnDesc(st){
+  const bc = ybBtnColorOptions(st.illum, st.ledColor);
+  const o = bc.opts.find(o=>o.id===st.btnColor);
+  return o ? o.label : "";
+}
+function ybVfIf(st){
+  switch(st.illum){
+    case "hi1n": return "（AT-628：IF 26mA、VF 緑2.0V／赤1.9V／黄2.0V）";
+    case "hi2":  return "（IF 20mA、VF 青3.6V／緑3.5V／白3.6V）";
+    case "bi":   return "（AT-621-RM00：IF 45mA、VF 赤2.0V／緑2.1V）";
+    case "partial": return "（IF 15mA、VF 約2.0〜2.1V）";
+    default: return "";
+  }
+}
+function yb2ElemDesc(st){
+  const cl = ()=> (YB2.LED_COLORS[st.illum].find(c=>c.id===st.ledColor)||{}).label||"";
+  switch(st.illum){
+    case "res":  return "超高輝度LED "+cl()+"・"+YB2.VOLTS.res.find(v=>v.id===st.volt).label+"（"+yb2LedPart(st)+"）";
+    case "nores":return "超高輝度LED "+cl()+"・抵抗なし（AT-628-"+st.ledColor+"）";
+    case "bmw":  return "超高輝度LED "+cl()+"・抵抗なし（"+yb2LedPart(st)+"）";
+    case "none": return "非照光（発光素子なし）";
+  }
+}
+
+/* ================================================================ 全体描画・タブ */
+function render(){
+  series==="yb" ? renderYB() : renderYB2();
+}
+function switchSeries(s){
+  series = s;
+  $("tab-yb").classList.toggle("on", s==="yb");
+  $("tab-yb2").classList.toggle("on", s==="yb2");
+  normalizeCur();
+  render();
+}
+$("tab-yb").onclick = ()=>switchSeries("yb");
+$("tab-yb2").onclick = ()=>switchSeries("yb2");
+
+/* ================================================================ コピー */
+function currentFull(){
+  if(series==="yb"){
+    const st=stYB, b=ybBody(st);
+    return st.sale!=="P" ? b.pn+"-"+ybElemCode(st)+YB.ORDER_SHAPE[st.illum][st.shape]+st.btnColor+st.sale : b.pn;
+  }
+  const st=stYB2, b=yb2Body(st);
+  return st.sale!=="P" ? b.pn+"-"+yb2ElemCode(st)+yb2BtnSel(st).op+st.sale : b.pn;
+}
+function currentParts(){
+  const lines=[];
+  if(series==="yb"){
+    const st=stYB, b=ybBody(st);
+    if(st.sale!=="P") lines.push("オーダー形名: "+currentFull());
+    lines.push("スイッチ本体: "+b.pn);
+    if(st.illum==="partial"){ lines.push("LED内蔵ボタン: "+ybBtnPart(st)); }
+    else { lines.push("発光素子: "+ybLedPart(st)); lines.push("操作部ボタン: "+ybBtnPart(st)); }
+  } else {
+    const st=stYB2, b=yb2Body(st);
+    if(st.sale!=="P") lines.push("オーダー形名: "+currentFull());
+    lines.push("スイッチ本体: "+b.pn);
+    const led = yb2LedPart(st);
+    if(led) lines.push("発光素子: "+led);
+    lines.push("操作部ボタン: "+yb2BtnSel(st).pn);
+  }
+  return lines.join("\n");
+}
+function copyText(txt, btnEl){
+  const done = ()=>{ const t=btnEl.textContent; btnEl.textContent="コピーしました"; btnEl.classList.add("done");
+    setTimeout(()=>{btnEl.textContent=t; btnEl.classList.remove("done");},1400); };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(done).catch(()=>fallback());
+  } else fallback();
+  function fallback(){
+    const ta=document.createElement("textarea"); ta.value=txt; document.body.appendChild(ta);
+    ta.select(); try{document.execCommand("copy"); done();}catch(e){} document.body.removeChild(ta);
+  }
+}
+$("copy-full").onclick = function(){ copyText(currentFull(), this); };
+$("copy-parts").onclick = function(){ copyText(currentParts(), this); };
+
+/* ================================================================
+   逆引き：全有効組み合わせを生成関数で列挙し、入力形名と照合する。
+   組み立てと同じコードを通るため、生成と解読が食い違わない。
+================================================================ */
+let FULLMAP = null, BODYMAP = null;
+
+function yb2OpFor(st){
+  const sel = yb2BtnOptions(st).find(o=>o.id===st.btn);
+  return sel ? sel.op : null;
+}
+function buildMaps(){
+  if(FULLMAP) return;
+  FULLMAP = {}; BODYMAP = {};
+
+  /* ---- YB ---- */
+  const wpms = [["wp","screw"],["np","screw"],["np","snap"]];
+  for(const pole of ["1","2"]) for(const func of ["5","6"])
+  for(const [wp,mount] of wpms) for(const shape of ["round","square","rect"])
+  for(const contact of ["S1","G4"]){
+    const base = {pole,func,wp,mount,shape,contact};
+    const bodyPn = ybBody(base).pn;
+    if(!BODYMAP[bodyPn]) BODYMAP[bodyPn] = {series:"yb", state:{...base}};
+    const vars = [];
+    for(const v of YB.VOLTS.lamp) for(const b of ["B","M","R","W","Y"])
+      vars.push({illum:"lamp",volt:v.id,ledColor:"M",btnColor:b});
+    for(const v of ["05","12","24"]) for(const c of ["M","R","Y"]) for(const b of ["N",c])
+      vars.push({illum:"hi1r",volt:v,ledColor:c,btnColor:b});
+    for(const c of ["M","R","Y"]) for(const b of ["N",c])
+      vars.push({illum:"hi1n",volt:"00",ledColor:c,btnColor:b});
+    for(const c of ["B","M","W"])
+      vars.push({illum:"hi2",volt:"00",ledColor:c,btnColor:"B"});
+    for(const v of ["05","12","24","00"])
+      vars.push({illum:"bi",volt:v,ledColor:"RM",btnColor:"N"});
+    for(const c of ["0M","0R","0Y","RM"]) for(const v of ["05","12","24","00"]) for(const b of ["K","M","R","W","Y"])
+      vars.push({illum:"partial",volt:v,ledColor:c,btnColor:b});
+    for(const va of vars){
+      const st = {...base,...va};
+      const b2 = ybElemCode(st)+YB.ORDER_SHAPE[st.illum][st.shape]+st.btnColor;
+      for(const sale of ["S","K"])
+        FULLMAP[bodyPn+"-"+b2+sale] = {series:"yb", state:{...st, sale}};
+    }
+  }
+
+  /* ---- YB2 ---- */
+  const yb2Btns = {
+    round:{res:["N","SAME","H","KS"], nores:["N","SAME","H","KS"], bmw:["B","C","KS"], none:["P","H"]},
+    square:{res:["N","SAME","H"], nores:["N","SAME","H"], bmw:["N","H"], none:["P","H"]},
+  };
+  for(const pole of ["1","2"]) for(const func of ["5","6"])
+  for(const shape of ["round","square"]) for(const flange of ["K","P","S"])
+  for(const contact of ["S1","G4"]){
+    const base = {pole,func,shape,flange,contact};
+    const bodyPn = yb2Body(base).pn;
+    if(!BODYMAP[bodyPn]) BODYMAP[bodyPn] = {series:"yb2", state:{...base}};
+    const vars = [];
+    for(const v of ["05","12","24"]) for(const c of ["M","R","Y"]) for(const b of yb2Btns[shape].res)
+      vars.push({illum:"res",volt:v,ledColor:c,btn:b});
+    for(const c of ["R","Y"]) for(const b of yb2Btns[shape].nores)
+      vars.push({illum:"nores",volt:"00",ledColor:c,btn:b});
+    for(const c of ["B","M","W"]) for(const b of yb2Btns[shape].bmw)
+      vars.push({illum:"bmw",volt:"00",ledColor:c,btn:b});
+    for(const b of yb2Btns[shape].none)
+      vars.push({illum:"none",volt:"--",ledColor:"M",btn:b});
+    for(const va of vars){
+      const st = {...base,...va};
+      const op = yb2OpFor(st);
+      if(!op) continue;
+      const b2 = yb2ElemCode(st)+op;
+      for(const sale of ["S","K"])
+        FULLMAP[bodyPn+"-"+b2+sale] = {series:"yb2", state:{...st, sale}};
+    }
+  }
+}
+
+function normalizePN(raw){
+  let t = "";
+  for(const ch of raw.trim()){
+    const c = ch.charCodeAt(0);
+    if(c>=0xFF01 && c<=0xFF5E) t += String.fromCharCode(c-0xFEE0); // 全角英数→半角
+    else if("ー−–—―".includes(ch)) t += "-";
+    else if(ch===" "||ch==="\u3000") continue;
+    else t += ch;
+  }
+  return t.toUpperCase();
+}
+function applyDecoded(entry, msgHtml, cls){
+  if(entry.series==="yb") Object.assign(stYB, entry.state);
+  else Object.assign(stYB2, entry.state);
+  switchSeries(entry.series);
+  const m = $("decode-msg");
+  m.className = "decode-msg "+cls;
+  m.innerHTML = msgHtml;
+}
+function decodePN(){
+  buildMaps();
+  const raw = $("decode-in").value;
+  const t = normalizePN(raw);
+  const m = $("decode-msg");
+  if(!t){ m.className="decode-msg"; m.textContent=""; return; }
+  if(FULLMAP[t]){
+    applyDecoded(FULLMAP[t], "「"+t+"」を解読しました。選択肢・分解表・部品リストに反映しています。", "ok");
+    return;
+  }
+  if(BODYMAP[t]){
+    applyDecoded(BODYMAP[t], "「"+t+"」をスイッチ本体形名として解読しました。発光素子・操作部は現在の選択のままです。", "ok");
+    return;
+  }
+  const i = t.lastIndexOf("-");
+  if(i > 3){
+    const pre = t.slice(0,i), rest = t.slice(i+1);
+    if(BODYMAP[pre]){
+      applyDecoded(BODYMAP[pre],
+        "本体部分「"+pre+"」は解読できましたが、発光素子・操作部の記号「"+rest+"」がカタログ上の有効な組み合わせと一致しません。記号の写し間違い、または本ツール未対応の特注仕様の可能性があります。","warn");
+      return;
+    }
+  }
+  m.className = "decode-msg err";
+  m.textContent = "「"+t+"」はYB／YB2シリーズの形名として解読できませんでした。オーダー形名（例: YB-15WSKS1-119BBS）または本体形名を入力してください。";
+}
+$("decode-btn").onclick = decodePN;
+$("decode-in").addEventListener("keydown", e=>{ if(e.key==="Enter") decodePN(); });
+
+normalizeCur();
+render();
+</script>
+</body>
+</html>
