@@ -1006,6 +1006,14 @@ function decodePN(){
     applyDecoded(BODYMAP[t], "「"+t+"」をスイッチ本体形名として解読しました。発光素子・操作部は現在の選択のままです。", "ok");
     return;
   }
+  // 販売形態記号（S/K）省略に対応：末尾にSを補って一致すれば有効な構成
+  if(FULLMAP[t+"S"]){
+    const e = FULLMAP[t+"S"];
+    const st2 = {...e.state, sale:"S"};
+    applyDecoded({series:e.series, state:st2},
+      "「"+t+"」を解読しました（末尾の販売形態記号が省略されています）。仕様の特定にS/Kは影響しないため、セット（S）として読み込みました。発注時は末尾に S（組立て済み）または K（一括包装）を付けてください。","warn");
+    return;
+  }
   const i = t.lastIndexOf("-");
   if(i > 3){
     const pre = t.slice(0,i), rest = t.slice(i+1);
